@@ -843,7 +843,51 @@ function saveClStat(){
   });
 }
 
-// ══ Message obsidian → client ══
+// ══ BATCH CONTENU CLIENT ══
+function openBatchClient(){
+  if(!CL_ID)return;
+  g('madd-batch-cl').classList.add('open');
+  var all_p=DB.get('posts_cl_'+CL_ID)||[];
+  var mw=0;all_p.forEach(function(p){if(p.semaine>mw)mw=p.semaine;});
+  var dw=mw>0?mw:1;var nw=Math.max(6,mw+2);var wh='';
+  for(var w=1;w<=nw;w++){var cnt=all_p.filter(function(p){return p.semaine===w;}).length;wh+='<button type="button" class="spill-btn'+(w===dw?' on':'')+'" data-val="'+w+'" onclick="selWkCl(this)">S'+w+(cnt>0?' ('+cnt+')':'')+'</button>';}
+  g('bcl-week-pills').innerHTML=wh;g('bcl-week').value=dw;
+  g('bcl-cnt').value=3;g('bcl-cnt-lbl').textContent=3;
+  updPreviewCl();
+}
+function closeBatchClient(){g('madd-batch-cl').classList.remove('open');}
+g('madd-batch-cl').addEventListener('click',function(e){if(e.target===g('madd-batch-cl'))closeBatchClient();});
+function selWkCl(btn){document.querySelectorAll('#bcl-week-pills .spill-btn').forEach(function(b){b.classList.remove('on');});btn.classList.add('on');g('bcl-week').value=parseInt(btn.getAttribute('data-val'));updPreviewCl();}
+var BCL_CNT=3;
+function adjBatchCl(d){BCL_CNT=Math.max(1,Math.min(20,BCL_CNT+d));g('bcl-cnt').value=BCL_CNT;g('bcl-cnt-lbl').textContent=BCL_CNT;updPreviewCl();}
+function updPreviewCl(){
+  var wk=parseInt(g('bcl-week').value)||1;var cnt=BCL_CNT;
+  var all_p=[];try{all_p=JSON.parse(localStorage.getItem('posts_cl_'+CL_ID)||'[]');}catch(e){}
+  var existing=all_p.filter(function(p){return p.semaine===wk;}).length;var h='';
+  for(var i=1;i<=cnt;i++){var rn=existing+i;var isB=rn>7;h+='<span style="'+(isB?'background:var(--blb);color:var(--blu)':'background:rgba(192,86,33,.12);color:var(--org)')+';padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700">S'+wk+'R'+rn+'</span>';}
+  g('bcl-preview').innerHTML=h;
+}
+function saveBatchClient(){
+  if(!CL_ID)return;
+  var wk=parseInt(g('bcl-week').value)||1;var cnt=BCL_CNT;
+  var plat=g('bcl-plat').value||'Instagram';var fmt=g('bcl-fmt').value||'Reel';var st=g('bcl-st').value||'idee';
+  var key='posts_cl_'+CL_ID;var all_p=[];try{all_p=JSON.parse(localStorage.getItem(key)||'[]');}catch(e){}
+  var existing=all_p.filter(function(p){return p.semaine===wk;}).length;
+  var created=[];
+  for(var i=1;i<=cnt;i++){
+    var rn=existing+i;
+    created.push({client_id:CL_ID,titre:'S'+wk+'R'+rn,semaine:wk,reel:rn,isBonus:rn>7,plateforme:plat,format:fmt,statut:st,vues:0});
+  }
+  // Sauvegarder en Supabase
+  Promise.all(created.map(function(c){return sbPost('posts_clients',c);}))
+  .then(function(){
+    // Aussi en localStorage pour l'aperçu rapide
+    for(var j=created.length-1;j>=0;j--)all_p.push(created[j]);
+    localStorage.setItem(key,JSON.stringify(all_p));
+    closeBatchClient();toast(cnt+' réels S'+wk+' créés pour ce client ✓');
+  });
+}
+  // ══ Message obsidian → client ══
 function sendClientMsg(){var inp=g('clf-msg'),txt=inp.value.trim();if(!txt||!CL_ID)return;inp.value='';sbPost('messages',{client_id:CL_ID,auteur:'obsidian',contenu:txt}).then(function(){return sbFetch('messages','client_id=eq.'+CL_ID+'&select=*&order=created_at.asc');}).then(function(msgs){g('spcl-msgs').innerHTML=renderMsgsList(msgs,{nom:'Client'});toast('Message envoyé ✓');});}
 
 document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeAdd();closePanel();closeChart();closeAddPost();closePanelPost();closeAddStat();closePanelClient();closeAddClient();closeAddLivrable();}});
