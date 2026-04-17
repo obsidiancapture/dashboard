@@ -1396,7 +1396,7 @@ function openPanelClient(id) {
       '</div>';
     }).join(''):'<div style="font-size:13px;color:var(--tx3);padding:8px 0">Aucun livrable</div>';
     // Messages
-    g('spcl-msgs').innerHTML=renderMsgsList(msgs,CLIENT);
+    g('spcl-msgs').innerHTML=renderMsgsList(msgs,cl);
     g('sovl-cl').classList.add('open');g('spanel-cl').classList.add('open');
   });
 }
