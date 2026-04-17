@@ -489,32 +489,19 @@ function saveBatch(){
   var st=g('b-st').value||'idee';
   var btn=g('b-save-btn');
   btn.disabled=true;btn.textContent='Création en cours...';
-  // Créer séquentiellement pour éviter les conflits de numérotation
   function createOne(idx){
     if(idx>=B_CNT){
-      btn.disabled=false;btn.innerHTML='Créer <span id="b-cnt-save">'+B_CNT+'</span> réels →';
-      closeBatch();renderContenu();renderAccueil();
-      toast(B_CNT+' réels S'+wk+' créés ✓');
+      sbF('posts_clients','client_id=eq.'+CL.id+'&select=*&order=semaine.asc,reel.asc').then(function(posts){
+        POSTS=Array.isArray(posts)?posts:[];
+        btn.disabled=false;btn.innerHTML='Créer <span id="b-cnt-save">'+B_CNT+'</span> réels →';
+        closeBatch();renderContenu();renderAccueil();
+        toast(B_CNT+' réels S'+wk+' créés ✓');
+      });
       return;
     }
-    var existing=POSTS.filter(function(p){return p.semaine===wk;}).length;
+    var existing=POSTS.filter(function(p){return p.semaine===wk;}).length+idx;
     var rn=existing+1;
-    sbP('posts_clients',{
-      client_id:CL.id,
-      titre:'S'+wk+'R'+rn,
-      semaine:wk,
-      reel:rn,
-      isBonus:rn>7,
-      plateforme:plat,
-      format:fmt,
-      statut:st,
-      vues:0
-    }).then(function(r){
-      var p=Array.isArray(r)?r[0]:r;
-      if(p&&p.id){
-        POSTS.push(p);
-        POSTS.sort(function(a,b){return(a.semaine||0)-(b.semaine||0)||(a.reel||0)-(b.reel||0);});
-      }
+    sbP('posts_clients',{client_id:CL.id,titre:'S'+wk+'R'+rn,semaine:wk,reel:rn,isBonus:rn>7,plateforme:plat,format:fmt,statut:st,vues:0}).then(function(r){
       createOne(idx+1);
     }).catch(function(){
       btn.disabled=false;btn.innerHTML='Créer <span id="b-cnt-save">'+B_CNT+'</span> réels →';
