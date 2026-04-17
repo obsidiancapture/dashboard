@@ -1299,7 +1299,8 @@ function renderClPage() {
       return;
     }
     var SLV = {en_attente:'En attente',en_cours:'En cours',livre:'Livr&eacute;',valide:'Valid&eacute;',revision:'R&eacute;vision'};
-    g('cl-list').innerHTML = clients.map(function(cl) {
+    // Construire la liste
+    var rows = clients.map(function(cl) {
       var f = cl.facturation && cl.facturation[0] ? cl.facturation[0] : {};
       var livs = cl.livrables || [];
       var done = livs.filter(function(l){return l.statut==='livre'||l.statut==='valide';}).length;
@@ -1307,18 +1308,24 @@ function renderClPage() {
       var paye = (f.acompte_paye?f.acompte||0:0)+(f.solde_paye?f.solde||0:0);
       var payePct = f.budget_total ? Math.round(paye/f.budget_total*100) : 0;
       var statusTxt = f.solde_paye ? '<span class="badge bsg">Sold&eacute;</span>' : f.acompte_paye ? '<span class="badge br1">Acompte ok</span>' : '<span class="badge bcc">En cours</span>';
-      var clid=cl.id;
-      return '<div class="pr" style="grid-template-columns:2fr 1fr 1fr 1fr 100px 36px;cursor:pointer" onclick="openPanelClient(&quot;'+clid+'&quot;)">'+
+      return '<div class="pr cl-row" style="grid-template-columns:2fr 1fr 1fr 1fr 100px 36px;cursor:pointer" data-clientid="'+cl.id+'">'+
         '<div><div class="pnm">'+esc(cl.nom)+'</div><div class="psb">'+(cl.secteur||'')+(cl.email?' &middot; '+cl.email:'')+'</div></div>'+
         '<div class="pcl">'+(cl.secteur||'&mdash;')+'</div>'+
-        '<div class="pcl">'+done+' / '+livs.length+' livr&eacute;s '+
+        '<div class="pcl">'+done+' / '+livs.length+' livr&eacute;s'+
           '<div style="height:3px;background:var(--gray2);border-radius:2px;overflow:hidden;margin-top:4px"><div style="height:100%;width:'+pct+'%;background:var(--black)"></div></div></div>'+
         '<div class="pcl">'+(f.budget_total?f.budget_total.toLocaleString('fr-FR')+'&euro;':'&mdash;')+
           '<div style="font-size:10px;color:var(--tx3);margin-top:2px">'+payePct+'% pay&eacute;</div></div>'+
         '<div>'+statusTxt+'</div>'+
-        '<div><button class="ibtn" onclick="event.stopPropagation();openPanelClient(&quot;'+clid+'&quot;)" style="background:var(--gray1);border:1px solid var(--gray2);width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:16px;color:var(--tx3);display:flex;align-items:center;justify-content:center;">&#8250;</button></div>'+
+        '<div><button class="ibtn" style="background:var(--gray1);border:1px solid var(--gray2);width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:16px;color:var(--tx3);display:flex;align-items:center;justify-content:center;">&#8250;</button></div>'+
       '</div>';
     }).join('');
+    g('cl-list').innerHTML = rows;
+    // Attacher les événements après rendu DOM
+    document.querySelectorAll('.cl-row').forEach(function(row) {
+      row.addEventListener('click', function() {
+        openPanelClient(this.getAttribute('data-clientid'));
+      });
+    });
   });
 }
 
