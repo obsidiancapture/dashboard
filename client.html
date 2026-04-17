@@ -608,9 +608,9 @@ function saveBatch(){
   var wk=parseInt(g('b-week').value)||1;
   var plat=g('b-plat').value||'Instagram';var fmt=g('b-fmt').value||'Reel';var st=g('b-st').value||'idee';
   var btn=g('b-save-btn');btn.disabled=true;btn.textContent='Création...';
+  var baseN=POSTS.filter(function(p){return p.semaine===wk;}).length;
   function createOne(idx){
     if(idx>=BCNT){
-      // Recharger depuis Supabase après création
       sbF('posts_clients','client_id=eq.'+CL.id+'&select=*&order=semaine.asc,reel.asc').then(function(posts){
         POSTS=Array.isArray(posts)?posts:[];
         btn.disabled=false;btn.innerHTML='Créer <span id="b-cnt-save">'+BCNT+'</span> réels →';
@@ -618,13 +618,15 @@ function saveBatch(){
       });
       return;
     }
-    var existing=POSTS.filter(function(p){return p.semaine===wk;}).length;
-    var rn=existing+1;
-    sbP('posts_clients',{client_id:CL.id,titre:'S'+wk+'R'+rn,semaine:wk,reel:rn,isBonus:rn>7,plateforme:plat,format:fmt,statut:st,vues:0})
-    .then(function(r){
-      var p=Array.isArray(r)?r[0]:r;if(p&&p.id)POSTS.push(p);
-      createOne(idx+1);
-    }).catch(function(){btn.disabled=false;btn.innerHTML='Créer <span id="b-cnt-save">'+BCNT+'</span> réels →';toast('Erreur création');});
+    var rn=baseN+idx+1;
+    fetch(SB+'/rest/v1/posts_clients',{
+      method:'POST',
+      headers:HJ,
+      body:JSON.stringify({client_id:CL.id,titre:'S'+wk+'R'+rn,semaine:wk,reel:rn,plateforme:plat,format:fmt,statut:st,vues:0})
+    }).then(function(r){
+      if(!r.ok)return r.text().then(function(t){console.error('SB error:',t);createOne(idx+1);});
+      return r.json().then(function(){createOne(idx+1);});
+    }).catch(function(e){console.error(e);createOne(idx+1);});
   }
   createOne(0);
 }
