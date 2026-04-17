@@ -686,7 +686,7 @@ var POST_ST=[{id:'idee',label:'Idée',cls:'sc-idee'},{id:'tourne',label:'Tourné
 var PSM={};POST_ST.forEach(function(s){PSM[s.id]=s;});
 var PLAT_IC={Instagram:'📸',TikTok:'◆',YouTube:'▶',LinkedIn:'in'};
 var PLAT_CLS={Instagram:'plat-ig',TikTok:'plat-tt',YouTube:'plat-yt',LinkedIn:'plat-li'};
-var PLATS=[{id:'Instagram',icon:'📸',color:'#e1306c',bg:'rgba(225,48,108,.1)'},{id:'TikTok',icon:'◆',color:'#111',bg:'rgba(0,0,0,.06)'},{id:'YouTube',icon:'▶',color:'#ff0000',bg:'rgba(255,0,0,.1)'}];
+var PLATS=[{id:'Instagram',icon:'📸',label:'Instagram',color:'#e1306c',bg:'rgba(225,48,108,.1)'},{id:'TikTok',icon:'◆',label:'TikTok',color:'#111',bg:'rgba(0,0,0,.06)'},{id:'YouTube',icon:'▶',label:'YouTube',color:'#ff0000',bg:'rgba(255,0,0,.1)'}];
 function g(id){return document.getElementById(id);}
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function todayStr(){return new Date().toISOString().split('T')[0];}
