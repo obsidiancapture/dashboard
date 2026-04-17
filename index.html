@@ -449,8 +449,18 @@ body{background:var(--bg);color:var(--tx);font-family:var(--sf);min-height:100vh
 
 <!-- PAGE CLIENTS -->
 <div class="main" id="page-clients" style="display:none">
-  <div class="topbar"><div class="tbtl">Mes <em>clients</em></div></div>
-  <div class="ph-page"><div class="ph-t">Bientôt disponible</div><div class="ph-s">Section en cours</div></div>
+  <div class="topbar">
+    <div class="tbtl">Mes <em>clients</em></div>
+    <div class="tbdate" id="cltbdate"></div>
+    <button class="addbtn" onclick="openAddClient()">+ Nouveau client</button>
+  </div>
+  <div class="kpi-strip" id="cl-kpis"></div>
+  <div class="larea">
+    <div class="lhead" style="grid-template-columns:2fr 1fr 1fr 1fr 100px 36px">
+      <div>Client</div><div>Secteur</div><div>Livrables</div><div>Facturation</div><div>Statut</div><div></div>
+    </div>
+    <div id="cl-list"></div>
+  </div>
 </div>
 </div>
 
@@ -542,6 +552,120 @@ body{background:var(--bg);color:var(--tx);font-family:var(--sf);min-height:100vh
     <div style="flex:1"></div>
     <button class="btn bsec" onclick="closePanelPost()">Fermer</button>
     <button class="btn bprim" onclick="savePost()">Sauvegarder</button>
+  </div>
+</div>
+
+<!-- MODAL ADD CLIENT -->
+<div class="mbg" id="madd-client">
+  <div class="msh" onclick="event.stopPropagation()">
+    <div class="mhd"></div>
+    <div class="mtl">Nouveau <em>client</em></div>
+    <div class="qg">
+      <div class="qf qfu"><label>Nom / Entreprise *</label><input type="text" id="cl-nom" placeholder="Ex : Lemon Planet"></div>
+      <div class="qf"><label>Secteur</label><input type="text" id="cl-sec" placeholder="Sport, Coiffure..."></div>
+      <div class="qf"><label>Email</label><input type="email" id="cl-email" placeholder="contact@client.fr"></div>
+      <div class="qf"><label>T&eacute;l&eacute;phone</label><input type="tel" id="cl-tel" placeholder="06 XX XX XX XX"></div>
+      <div class="qf"><label>Instagram</label><input type="text" id="cl-insta" placeholder="@client"></div>
+      <div class="qf"><label>Budget total (&euro;)</label><input type="number" id="cl-budget" placeholder="3000" min="0"></div>
+      <div class="qf"><label>Acompte (&euro;)</label><input type="number" id="cl-acompte" placeholder="1500" min="0"></div>
+      <div class="qf"><label>Solde (&euro;)</label><input type="number" id="cl-solde" placeholder="1500" min="0"></div>
+      <div class="qf"><label>Livrables pr&eacute;vus</label><input type="number" id="cl-livtot" placeholder="6" min="0"></div>
+      <div class="qf"><label>Date &eacute;ch&eacute;ance</label><input type="date" id="cl-ech"></div>
+    </div>
+    <div class="mac">
+      <button class="btn bsec" onclick="closeAddClient()">Annuler</button>
+      <button class="btn bprim" onclick="saveNewClient()">Cr&eacute;er le client &rarr;</button>
+    </div>
+  </div>
+</div>
+
+<!-- SIDE PANEL CLIENT -->
+<div class="ovl" id="sovl-cl" onclick="closePanelClient()"></div>
+<div class="spanel" id="spanel-cl">
+  <div class="ph">
+    <div class="sp-av" id="spcl-av">—</div>
+    <div style="flex:1;min-width:0"><div class="sp-nm" id="spcl-nm">—</div><div class="sp-mt" id="spcl-mt"></div></div>
+    <button class="ph-close" onclick="closePanelClient()">&#10005;</button>
+  </div>
+  <div class="pb">
+    <div class="sp-sec">
+      <div class="sp-sec-t">Lien client</div>
+      <div style="display:flex;align-items:center;gap:8px;background:var(--gray1);border:1px solid var(--gray2);border-radius:var(--r);padding:10px 14px;">
+        <div id="spcl-link" style="font-size:12px;color:var(--tx2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;"></div>
+        <button onclick="copyClientLink()" style="padding:5px 12px;border-radius:20px;background:var(--black);color:#fff;border:none;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">Copier</button>
+      </div>
+    </div>
+    <div class="sp-sec">
+      <div class="sp-sec-t">Facturation</div>
+      <div class="ig2">
+        <div class="ifd"><label>Budget total (&euro;)</label><input type="number" id="clf-budget" placeholder="0"></div>
+        <div class="ifd"><label>Acompte (&euro;)</label><input type="number" id="clf-acompte" placeholder="0"></div>
+        <div class="ifd"><label>Solde (&euro;)</label><input type="number" id="clf-solde" placeholder="0"></div>
+        <div class="ifd"><label>Ech&eacute;ance</label><input type="date" id="clf-ech"></div>
+        <div class="ifd"><label>Acompte pay&eacute;</label>
+          <select id="clf-apaye"><option value="false">Non</option><option value="true">Oui &#10003;</option></select>
+        </div>
+        <div class="ifd"><label>Solde pay&eacute;</label>
+          <select id="clf-spaye"><option value="false">Non</option><option value="true">Oui &#10003;</option></select>
+        </div>
+      </div>
+    </div>
+    <div class="sp-sec">
+      <div class="sp-sec-t">Livrables</div>
+      <div id="spcl-livs"></div>
+      <button onclick="openAddLivrable()" style="margin-top:8px;padding:7px 14px;border-radius:20px;border:1px dashed var(--gray2);background:transparent;font-family:var(--sf);font-size:12px;font-weight:600;color:var(--tx3);cursor:pointer;width:100%;">+ Ajouter un livrable</button>
+    </div>
+    <div class="sp-sec">
+      <div class="sp-sec-t">Message au client</div>
+      <div style="display:flex;gap:8px;">
+        <input type="text" id="clf-msg" placeholder="Votre message..." style="flex:1;background:var(--gray1);border:1px solid var(--gray2);border-radius:var(--r);padding:9px 12px;font-family:var(--sf);font-size:13px;color:var(--tx);outline:none;">
+        <button onclick="sendClientMsg()" style="padding:9px 16px;border-radius:20px;background:var(--black);color:#fff;border:none;font-family:var(--sf);font-size:12px;font-weight:700;cursor:pointer;">Envoyer</button>
+      </div>
+      <div id="spcl-msgs" style="margin-top:10px;display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto;"></div>
+    </div>
+    <div class="sp-sec">
+      <div class="sp-sec-t">Informations</div>
+      <div class="ig2">
+        <div class="ifd"><label>Secteur</label><input type="text" id="clf-sec" placeholder="Sport..."></div>
+        <div class="ifd"><label>Email</label><input type="email" id="clf-email" placeholder="contact@..."></div>
+        <div class="ifd"><label>T&eacute;l&eacute;phone</label><input type="tel" id="clf-tel" placeholder="06..."></div>
+        <div class="ifd"><label>Instagram</label><input type="text" id="clf-insta" placeholder="@client"></div>
+      </div>
+    </div>
+  </div>
+  <div class="sp-foot">
+    <button class="btn bdng" onclick="delClient()">Supprimer</button>
+    <div style="flex:1"></div>
+    <button class="btn bsec" onclick="closePanelClient()">Fermer</button>
+    <button class="btn bprim" onclick="savePanelClient()">Sauvegarder</button>
+  </div>
+</div>
+
+<!-- MODAL ADD LIVRABLE -->
+<div class="mbg" id="madd-liv">
+  <div class="msh" onclick="event.stopPropagation()">
+    <div class="mhd"></div>
+    <div class="mtl">Nouveau <em>livrable</em></div>
+    <div class="qg">
+      <div class="qf qfu"><label>Titre *</label><input type="text" id="lv-titre" placeholder="Ex : Vid&eacute;o r&eacute;seaux &mdash; Reel sport"></div>
+      <div class="qf"><label>Format</label><input type="text" id="lv-format" placeholder="Reel, Carrousel..."></div>
+      <div class="qf"><label>Plateforme</label><input type="text" id="lv-plat" placeholder="Instagram, TikTok..."></div>
+      <div class="qf"><label>Statut</label>
+        <select id="lv-statut">
+          <option value="en_attente">En attente</option>
+          <option value="en_cours">En cours</option>
+          <option value="livre">Livr&eacute;</option>
+          <option value="valide">Valid&eacute;</option>
+          <option value="revision">R&eacute;vision</option>
+        </select>
+      </div>
+      <div class="qf"><label>Date pr&eacute;vue</label><input type="date" id="lv-date"></div>
+      <div class="qf qfu"><label>Notes internes</label><input type="text" id="lv-notes" placeholder="Brief, instructions..."></div>
+    </div>
+    <div class="mac">
+      <button class="btn bsec" onclick="closeAddLivrable()">Annuler</button>
+      <button class="btn bprim" onclick="saveNewLivrable()">Ajouter &rarr;</button>
+    </div>
   </div>
 </div>
 
@@ -678,6 +802,14 @@ body{background:var(--bg);color:var(--tx);font-family:var(--sf);min-height:100vh
 <div class="toast" id="toast"></div>
 
 <script>
+var SB_URL='https://fytcyqvvmxbnvingvaen.supabase.co';
+var SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ5dGN5cXZ2bXhibnZpbmd2YWVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzODcwNjQsImV4cCI6MjA5MTk2MzA2NH0.XFBMB9FSV_sIFW0EFS0-H1KCRYbiXLiz-d-QF5-rLtU';
+
+function sbFetch(t,p){return fetch(SB_URL+'/rest/v1/'+t+'?'+(p||''),{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}}).then(function(r){return r.json();});}
+function sbPost(t,d){return fetch(SB_URL+'/rest/v1/'+t,{method:'POST',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify(d)}).then(function(r){return r.json();});}
+function sbPatch(t,id,d){return fetch(SB_URL+'/rest/v1/'+t+'?id=eq.'+id,{method:'PATCH',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify(d)});}
+function sbDel(t,id){return fetch(SB_URL+'/rest/v1/'+t+'?id=eq.'+id,{method:'DELETE',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});}
+
 var DB={get:function(k){try{return JSON.parse(localStorage.getItem('obd_'+k)||'[]');}catch(e){return[];}},set:function(k,v){localStorage.setItem('obd_'+k,JSON.stringify(v));}};
 var ST=[{id:'cold-call',label:'Cold Call',cls:'bcc'},{id:'pas-repondu',label:'Pas répondu',cls:'bpr'},{id:'pas-abouti',label:'Pas abouti',cls:'bpa'},{id:'premier-contact',label:'Premier contact',cls:'bpc'},{id:'r1',label:'Relance R1',cls:'br1'},{id:'r2',label:'Relance R2',cls:'br2'},{id:'devis',label:'Devis envoyé',cls:'bdv'},{id:'signe',label:'Signé ✓',cls:'bsg'},{id:'perdu',label:'Perdu',cls:'bpd'}];
 var SM={};ST.forEach(function(s){SM[s.id]=s;});
@@ -784,6 +916,7 @@ function showPage(p){
   if(p==='prosp'){renderKPIs();renderFilters();renderList();g('tbdate').textContent=fmtDay();}
   if(p==='contenu'){renderCKPIs();renderCFilters();renderCList();g('ctbdate').textContent=fmtDay();}
   if(p==='stats'){renderStats();g('stbdate').textContent=fmtDay();}
+  if(p==='clients'){renderClPage();g('cltbdate').textContent=fmtDay();}
 }
 
 // ══ KPIs PROSPECTION ══
@@ -1129,7 +1262,196 @@ function saveStat(){
 }
 
 // ══ KEYBOARD + INIT ══
-document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeAdd();closePanel();closeChart();closeAddPost();closePanelPost();closeAddStat();}});
+
+// ══ CLIENTS SUPABASE ══
+var CL_ID = null; // client actuellement ouvert dans le panel
+
+function renderMsgsList(msgs,cl) {
+  if(!msgs||!msgs.length) return '<div style="text-align:center;padding:12px;color:var(--tx3);font-size:12px">Aucun message</div>';
+  return msgs.map(function(m) {
+    var isO = m.auteur === 'obsidian';
+    var bg = isO ? 'var(--black)' : 'var(--gray1)';
+    var col = isO ? '#fff' : 'var(--tx)';
+    var align = isO ? 'flex-start' : 'flex-end';
+    var who = isO ? 'Vous' : (cl ? cl.nom : 'Client');
+    return '<div style="padding:8px 12px;border-radius:10px;font-size:12px;background:'+bg+';color:'+col+';align-self:'+align+'">'+
+      '<div style="font-size:10px;font-weight:700;opacity:.5;margin-bottom:2px">'+who+'</div>'+
+      esc(m.contenu)+'</div>';
+  }).join('');
+}
+
+function renderClPage() {
+  sbFetch('clients','select=*,facturation(*),livrables(*)').then(function(clients) {
+    // KPIs
+    var total = clients.length;
+    var actifs = clients.filter(function(c){ return c.facturation && c.facturation.length && (!c.facturation[0].solde_paye); }).length;
+    var ca = clients.reduce(function(s,c){ return s + (c.facturation && c.facturation[0] ? (c.facturation[0].budget_total||0) : 0); }, 0);
+    var livDone = clients.reduce(function(s,c){ return s + (c.livrables ? c.livrables.filter(function(l){return l.statut==='livre'||l.statut==='valide';}).length : 0); }, 0);
+    var livTotal = clients.reduce(function(s,c){ return s + (c.livrables ? c.livrables.length : 0); }, 0);
+    g('cl-kpis').innerHTML =
+      '<div class="kpic dark"><div class="klbl">Total clients</div><div class="kval">'+total+'</div></div>'+
+      '<div class="kpic"><div class="klbl">En cours</div><div class="kval ca">'+actifs+'</div></div>'+
+      '<div class="kpic"><div class="klbl">CA total</div><div class="kval">'+fmtK(ca)+'&euro;</div><div class="ksub cg">tous projets</div></div>'+
+      '<div class="kpic"><div class="klbl">Livrables</div><div class="kval">'+livDone+'<span style="font-size:14px;font-weight:400;color:var(--tx3);">/'+livTotal+'</span></div><div class="ksub cm">livr&eacute;s</div></div>';
+    // Liste
+    if(!clients.length) {
+      g('cl-list').innerHTML = '<div class="empty"><div class="empty-i">&#9672;</div><div class="empty-t">Aucun client</div><div class="empty-s">Clique sur "+ Nouveau client" pour commencer</div></div>';
+      return;
+    }
+    var SLV = {en_attente:'En attente',en_cours:'En cours',livre:'Livr&eacute;',valide:'Valid&eacute;',revision:'R&eacute;vision'};
+    g('cl-list').innerHTML = clients.map(function(cl) {
+      var f = cl.facturation && cl.facturation[0] ? cl.facturation[0] : {};
+      var livs = cl.livrables || [];
+      var done = livs.filter(function(l){return l.statut==='livre'||l.statut==='valide';}).length;
+      var pct = livs.length ? Math.round(done/livs.length*100) : 0;
+      var paye = (f.acompte_paye?f.acompte||0:0)+(f.solde_paye?f.solde||0:0);
+      var payePct = f.budget_total ? Math.round(paye/f.budget_total*100) : 0;
+      var statusTxt = f.solde_paye ? '<span class="badge bsg">Sold&eacute;</span>' : f.acompte_paye ? '<span class="badge br1">Acompte ok</span>' : '<span class="badge bcc">En cours</span>';
+      return '<div class="pr" style="grid-template-columns:2fr 1fr 1fr 1fr 100px 36px" data-clid="'+cl.id+'" onclick="openPanelClient(this.dataset.clid)">'+
+        '<div><div class="pnm">'+esc(cl.nom)+'</div><div class="psb">'+(cl.secteur||'')+(cl.email?' &middot; '+cl.email:'')+'</div></div>'+
+        '<div class="pcl">'+(cl.secteur||'&mdash;')+'</div>'+
+        '<div class="pcl">'+done+' / '+livs.length+' livr&eacute;s '+
+          '<div style="height:3px;background:var(--gray2);border-radius:2px;overflow:hidden;margin-top:4px"><div style="height:100%;width:'+pct+'%;background:var(--black)"></div></div></div>'+
+        '<div class="pcl">'+(f.budget_total?f.budget_total.toLocaleString('fr-FR')+'&euro;':'&mdash;')+
+          '<div style="font-size:10px;color:var(--tx3);margin-top:2px">'+payePct+'% pay&eacute;</div></div>'+
+        '<div>'+statusTxt+'</div>'+
+        '<div><button class="ibtn" data-clid="'+cl.id+'" onclick="event.stopPropagation();openPanelClient(this.dataset.clid)" style="background:var(--gray1);border:1px solid var(--gray2);width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:16px;color:var(--tx3);display:flex;align-items:center;justify-content:center;">&#8250;</button></div>'+
+      '</div>';
+    }).join('');
+  });
+}
+
+// Add client
+function openAddClient() {
+  ['cl-nom','cl-sec','cl-email','cl-tel','cl-insta','cl-budget','cl-acompte','cl-solde','cl-livtot'].forEach(function(id){var el=g(id);if(el)el.value='';});
+  g('madd-client').classList.add('open');
+  setTimeout(function(){g('cl-nom').focus();},120);
+}
+function closeAddClient(){g('madd-client').classList.remove('open');}
+g('madd-client').addEventListener('click',function(e){if(e.target===g('madd-client'))closeAddClient();});
+
+function saveNewClient() {
+  var nom = g('cl-nom').value.trim();
+  if(!nom){g('cl-nom').style.borderColor='var(--red)';g('cl-nom').focus();return;}
+  g('cl-nom').style.borderColor='';
+  // Créer le client
+  sbPost('clients',{nom:nom,secteur:g('cl-sec').value,email:g('cl-email').value,tel:g('cl-tel').value,instagram:g('cl-insta').value})
+  .then(function(data){
+    var cl = Array.isArray(data)?data[0]:data;
+    if(!cl||!cl.id){toast('Erreur création client');return;}
+    var cid = cl.id;
+    var budget = parseFloat(g('cl-budget').value)||0;
+    var acompte = parseFloat(g('cl-acompte').value)||0;
+    var solde = parseFloat(g('cl-solde').value)||0;
+    // Créer facturation
+    return sbPost('facturation',{client_id:cid,budget_total:budget,acompte:acompte,solde:solde,acompte_paye:false,solde_paye:false})
+    .then(function(){
+      closeAddClient();renderClPage();toast(nom+' créé ✓');
+      // Ouvrir le panel
+      setTimeout(function(){openPanelClient(cid);},400);
+    });
+  });
+}
+
+// Panel client
+function openPanelClient(id) {
+  CL_ID = id;
+  Promise.all([
+    sbFetch('clients','id=eq.'+id+'&select=*'),
+    sbFetch('facturation','client_id=eq.'+id+'&select=*'),
+    sbFetch('livrables','client_id=eq.'+id+'&select=*&order=created_at.asc'),
+    sbFetch('messages','client_id=eq.'+id+'&select=*&order=created_at.asc')
+  ]).then(function(r){
+    var cl=r[0][0]||{},f=r[1][0]||{},livs=r[2]||[],msgs=r[3]||[];
+    g('spcl-av').textContent=ini(cl.nom);g('spcl-nm').textContent=cl.nom;g('spcl-mt').textContent=(cl.secteur||'')+(cl.email?' · '+cl.email:'');
+    // Lien
+    var link = window.location.origin+'/client.html?token='+cl.token;
+    g('spcl-link').textContent=link;g('spcl-link').setAttribute('data-link',link);
+    // Fact
+    g('clf-budget').value=f.budget_total||'';g('clf-acompte').value=f.acompte||'';g('clf-solde').value=f.solde||'';
+    g('clf-ech').value=f.date_echeance||'';
+    g('clf-apaye').value=f.acompte_paye?'true':'false';g('clf-spaye').value=f.solde_paye?'true':'false';
+    // Infos
+    g('clf-sec').value=cl.secteur||'';g('clf-email').value=cl.email||'';g('clf-tel').value=cl.tel||'';g('clf-insta').value=cl.instagram||'';
+    // Livrables
+    var SL={en_attente:'En attente',en_cours:'En cours',livre:'Livré',valide:'Validé',revision:'Révision'};
+    var SC={en_attente:'bpr',en_cours:'bcc',livre:'bsg',valide:'bsg',revision:'br1'};
+    g('spcl-livs').innerHTML=livs.length?livs.map(function(l){
+      return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--gray2)">'+
+        '<div style="flex:1"><div style="font-size:13px;font-weight:700">'+esc(l.titre)+'</div>'+
+        '<div style="font-size:11px;color:var(--tx3);">'+(l.format||'')+(l.plateforme?' · '+l.plateforme:'')+'</div>'+
+        (l.notes_client?'<div style="font-size:11px;color:var(--org);margin-top:3px;font-weight:600">Commentaire : '+esc(l.notes_client)+'</div>':'')+
+        '</div>'+
+        '<select data-lid="'+l.id+'" onchange="updateLivStatut(this.dataset.lid,this.value)" style="font-size:11px;font-weight:700;border:none;background:transparent;cursor:pointer;">'+
+          Object.keys(SL).map(function(k){return '<option value="'+k+'"'+(l.statut===k?' selected':'')+'>'+SL[k]+'</option>';}).join('')+
+        '</select>'+
+      '</div>';
+    }).join(''):'<div style="font-size:13px;color:var(--tx3);padding:8px 0">Aucun livrable</div>';
+    // Messages
+    g('spcl-msgs').innerHTML=renderMsgsList(msgs,CLIENT);
+    g('sovl-cl').classList.add('open');g('spanel-cl').classList.add('open');
+  });
+}
+function closePanelClient(){g('sovl-cl').classList.remove('open');g('spanel-cl').classList.remove('open');CL_ID=null;}
+
+function copyClientLink(){
+  var link=g('spcl-link').getAttribute('data-link');
+  navigator.clipboard.writeText(link).then(function(){toast('Lien copié ✓');}).catch(function(){toast(link);});
+}
+
+function savePanelClient(){
+  if(!CL_ID)return;
+  // Update client infos
+  sbPatch('clients',CL_ID,{secteur:g('clf-sec').value,email:g('clf-email').value,tel:g('clf-tel').value,instagram:g('clf-insta').value});
+  // Update ou créer facturation
+  sbFetch('facturation','client_id=eq.'+CL_ID+'&select=id').then(function(r){
+    var fdata={client_id:CL_ID,budget_total:parseFloat(g('clf-budget').value)||0,acompte:parseFloat(g('clf-acompte').value)||0,solde:parseFloat(g('clf-solde').value)||0,acompte_paye:g('clf-apaye').value==='true',solde_paye:g('clf-spaye').value==='true',date_echeance:g('clf-ech').value||null};
+    if(r&&r.length){sbPatch('facturation',r[0].id,fdata);}else{sbPost('facturation',fdata);}
+  });
+  closePanelClient();renderClPage();toast('Client mis à jour ✓');
+}
+
+function delClient(){
+  if(!CL_ID||!confirm('Supprimer ce client et toutes ses données ?'))return;
+  sbDel('clients',CL_ID).then(function(){closePanelClient();renderClPage();toast('Client supprimé');});
+}
+
+function updateLivStatut(id,statut){
+  sbPatch('livrables',id,{statut:statut}).then(function(){toast('Statut mis à jour ✓');});
+}
+
+// Add livrable
+function openAddLivrable(){
+  if(!CL_ID)return;
+  ['lv-titre','lv-format','lv-plat','lv-notes'].forEach(function(id){var el=g(id);if(el)el.value='';});
+  g('lv-date').value='';g('lv-statut').value='en_attente';
+  g('madd-liv').classList.add('open');
+}
+function closeAddLivrable(){g('madd-liv').classList.remove('open');}
+g('madd-liv').addEventListener('click',function(e){if(e.target===g('madd-liv'))closeAddLivrable();});
+
+function saveNewLivrable(){
+  var titre=g('lv-titre').value.trim();
+  if(!titre){g('lv-titre').focus();return;}
+  sbPost('livrables',{client_id:CL_ID,titre:titre,format:g('lv-format').value,plateforme:g('lv-plat').value,statut:g('lv-statut').value,date_prevue:g('lv-date').value||null,notes:g('lv-notes').value})
+  .then(function(){closeAddLivrable();openPanelClient(CL_ID);toast('Livrable ajouté ✓');});
+}
+
+// Message obsidian → client
+function sendClientMsg(){
+  var inp=g('clf-msg'),txt=inp.value.trim();
+  if(!txt||!CL_ID)return;
+  inp.value='';
+  sbPost('messages',{client_id:CL_ID,auteur:'obsidian',contenu:txt})
+  .then(function(){return sbFetch('messages','client_id=eq.'+CL_ID+'&select=*&order=created_at.asc');})
+  .then(function(msgs){
+    g('spcl-msgs').innerHTML=renderMsgsList(msgs,{nom:'Client'});
+    toast('Message envoyé ✓');
+  });
+}
+
+
+document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeAdd();closePanel();closeChart();closeAddPost();closePanelPost();closeAddStat();closePanelClient();closeAddClient();closeAddLivrable();}});
 g('tbdate').textContent=fmtDay();
 renderKPIs();renderFilters();renderList();
 </script>
