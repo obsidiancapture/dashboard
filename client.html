@@ -276,6 +276,7 @@ body{background:var(--bg);color:var(--tx);font-family:var(--sf);min-height:100vh
   <div class="topbar">
     <div class="tbtl">Réseaux <em>sociaux</em></div>
     <div class="tbdate" id="stbdate"></div>
+    <button class="addbtn" onclick="openAddStat()">+ Mise à jour</button>
   </div>
   <div class="larea" style="padding-top:20px"><div id="stats-body"></div></div>
 </div>
@@ -432,6 +433,37 @@ body{background:var(--bg);color:var(--tx);font-family:var(--sf);min-height:100vh
       <button class="btn bsec" onclick="closeBatch()">Annuler</button>
       <button class="btn bprim" id="b-save-btn" onclick="saveBatch()">Créer <span id="b-cnt-save">3</span> réels →</button>
     </div>
+  </div>
+</div>
+
+<!-- MODAL STATS -->
+<div class="mbg" id="madd-stat">
+  <div class="msh" onclick="event.stopPropagation()">
+    <div class="mhd"></div>
+    <div class="mtl">Stats <em>réseau</em></div>
+    <div class="qg">
+      <div class="qf qfu"><label>Plateforme</label>
+        <div style="display:flex;gap:7px;margin-top:7px" id="stat-plat-pills">
+          <button type="button" class="spill-btn on" data-val="Instagram" onclick="tPill('stat-plat-pills','stat-plat',this)">📸 Instagram</button>
+          <button type="button" class="spill-btn" data-val="TikTok" onclick="tPill('stat-plat-pills','stat-plat',this)">◆ TikTok</button>
+          <button type="button" class="spill-btn" data-val="YouTube" onclick="tPill('stat-plat-pills','stat-plat',this)">▶ YouTube</button>
+        </div>
+        <input type="hidden" id="stat-plat" value="Instagram">
+      </div>
+      <div class="qf"><label>Mois</label><input type="month" id="stat-mois"></div>
+      <div class="qf"><label>Abonnés</label><input type="number" id="stat-ab" placeholder="4820"></div>
+      <div class="qf"><label>Nouveaux abonnés</label><input type="number" id="stat-new" placeholder="142"></div>
+      <div class="qf"><label>Vues totales</label><input type="number" id="stat-vues" placeholder="45000"></div>
+      <div class="qf"><label>Portée (reach)</label><input type="number" id="stat-reach" placeholder="12000"></div>
+      <div class="qf"><label>Impressions</label><input type="number" id="stat-imp" placeholder="30000"></div>
+      <div class="qf"><label>Likes</label><input type="number" id="stat-likes" placeholder="1200"></div>
+      <div class="qf"><label>Commentaires</label><input type="number" id="stat-comms" placeholder="80"></div>
+      <div class="qf"><label>Sauvegardes</label><input type="number" id="stat-saves" placeholder="350"></div>
+      <div class="qf"><label>Partages</label><input type="number" id="stat-shares" placeholder="120"></div>
+      <div class="qf"><label>Taux engagement (%)</label><input type="number" id="stat-eng" step="0.1" placeholder="4.2"></div>
+      <div class="qf qfu"><label>Meilleur post du mois</label><input type="text" id="stat-best" placeholder="Titre ou lien du post"></div>
+    </div>
+    <div class="mac"><button class="btn bsec" onclick="closeAddStat()">Annuler</button><button class="btn bprim" onclick="saveStat()">Enregistrer →</button></div>
   </div>
 </div>
 
@@ -631,33 +663,50 @@ function saveBatch(){
   createOne(0);
 }
 
-// ══ STATS ══
+// ══ STATS (identique dashboard) ══
 function renderStats(){
-  if(!STATS.length){g('stats-body').innerHTML='<div class="empty"><div class="empty-i">↗</div><div class="empty-t">Aucune donnée</div><div class="empty-s">Vos statistiques seront affichées ici par Obsidian Capture</div></div>';return;}
+  // Comme le dashboard : afficher toujours les 3 plateformes même sans données
   var html='';
   PLATS.forEach(function(plat){
     var ps=STATS.filter(function(s){return s.plateforme===plat.id;}).sort(function(a,b){return b.mois.localeCompare(a.mois);});
-    if(!ps.length)return;
-    var l=ps[0],prev=ps[1]||{},delta=(l.abonnes||0)-(prev.abonnes||0);
-    html+='<div class="plat-card"><div class="plat-hdr"><div class="plat-icon" style="background:'+plat.bg+'"><span>'+plat.icon+'</span></div>'+
-      '<div><div class="plat-name" style="color:'+plat.color+'">'+plat.id+'</div><div class="plat-date">'+l.mois+'</div></div>'+
-      '<div class="plat-fol"><div class="plat-fval">'+fmtK(l.abonnes)+'</div><div class="plat-fdelta '+(delta>0?'cg':delta<0?'cr':'cm')+'">'+(delta>0?'+':'')+fmtK(delta)+' ce mois</div></div></div>'+
-      '<div class="plat-body"><div class="stat-grid">'+
-        mkStat('Vues',l.vues,'cg')+mkStat('Engagement',l.engagement,'ca','%')+mkStat('Nouveaux',l.nouveaux_abonnes,'cg')+
+    var l=ps[0]||{};var prev=ps[1]||{};var delta=(l.abonnes||0)-(prev.abonnes||0);
+    html+='<div class="plat-card"><div class="plat-hdr">'+
+      '<div class="plat-icon" style="background:'+plat.bg+'"><span style="font-size:22px">'+plat.icon+'</span></div>'+
+      '<div><div class="plat-name" style="color:'+plat.color+'">'+plat.id+'</div><div class="plat-date">'+(l.mois||'Aucune donnée')+'</div></div>'+
+      '<div class="plat-fol"><div class="plat-fval">'+(l.abonnes?fmtK(l.abonnes):'—')+'</div>'+
+      '<div class="plat-fdelta '+(delta>0?'cg':delta<0?'cr':'cm')+'">'+(delta>0?'+':'')+fmtK(delta)+' ce mois</div></div>'+
       '</div>'+
-      (l.meilleur_post?'<div class="stat-div"></div><div style="font-size:13px;font-weight:600;color:var(--tx)">🏆 '+esc(l.meilleur_post)+'</div>':'')+
+      '<div class="plat-body"><div class="stat-grid">'+
+        mkStat('Vues',l.vues,'cg')+
+        mkStat('Portée',l.reach,'cm')+
+        mkStat('Impressions',l.impressions,'cm')+
+        mkStat('Likes',l.likes,'ca')+
+        mkStat('Commentaires',l.commentaires,'cm')+
+        mkStat('Sauvegardes',l.sauvegardes,'cb')+
+        mkStat('Partages',l.partages,'cb')+
+        mkStat('Nouveaux abonnés',l.nouveaux_abonnes,l.nouveaux_abonnes>0?'cg':'cm')+
+        mkStat('Engagement',l.engagement,'ca','%')+
+      '</div>'+
+      (l.meilleur_post?'<div class="stat-div"></div><div class="stat-b"><div class="stat-lbl">🏆 Meilleur post</div><div style="font-size:14px;font-weight:700;color:var(--tx);margin-top:4px">'+esc(l.meilleur_post)+'</div></div>':'')+
       (ps.length>1?evoChart(ps,plat.color):'')+
       '</div></div>';
   });
-  g('stats-body').innerHTML=html||'<div class="empty"><div class="empty-i">↗</div><div class="empty-t">Aucune donnée</div></div>';
+  g('stats-body').innerHTML=html;
 }
-function mkStat(l,v,cls,suf){return'<div class="stat-b"><div class="stat-lbl">'+l+'</div><div class="stat-val '+(v?cls:'')+'" style="'+(v?'':'color:var(--tx3)')+'">'+(!v&&v!==0?'—':fmtK(v)+(suf||''))+'</div></div>';}
+function mkStat(lbl,val,cls,suf){
+  var d=val===undefined||val===null||val===''?'—':fmtK(val)+(suf||'');
+  return'<div class="stat-b"><div class="stat-lbl">'+lbl+'</div><div class="stat-val '+(val?cls:'')+'" style="'+(val?'':'color:var(--tx3)')+'">'+d+'</div></div>';
+}
 function evoChart(ps,color){
   var pts=ps.slice(0,6).reverse();var max=0;pts.forEach(function(s){if((s.abonnes||0)>max)max=s.abonnes;});
   if(!max)return'';
   return'<div class="stat-div"></div><div style="font-size:11px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Évolution abonnés</div>'+
     '<div style="display:flex;align-items:flex-end;gap:5px;height:60px">'+
-    pts.map(function(s){var h=Math.round((s.abonnes||0)/max*56);return'<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px"><div style="width:100%;border-radius:4px 4px 0 0;height:'+h+'px;background:'+color+';opacity:.8;min-height:2px"></div><div style="font-size:8px;color:var(--tx3)">'+s.mois.slice(5)+'</div></div>';}).join('')+'</div>';
+    pts.map(function(s){var h=Math.round((s.abonnes||0)/max*56);
+      return'<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px">'+
+        '<div style="width:100%;border-radius:4px 4px 0 0;height:'+h+'px;background:'+color+';opacity:.8;min-height:2px"></div>'+
+        '<div style="font-size:8px;color:var(--tx3)">'+s.mois.slice(5)+'</div></div>';
+    }).join('')+'</div>';
 }
 
 // ══ LIVRABLES ══
@@ -741,7 +790,45 @@ function sendMsg(){
   });
 }
 
-document.addEventListener('keydown',function(e){if(e.key==='Escape'){closePanel();closeLivPanel();closeBatch();}});
+// ══ ADD STAT ══
+function openAddStat(){
+  ['stat-ab','stat-new','stat-vues','stat-reach','stat-imp','stat-likes','stat-comms','stat-saves','stat-shares','stat-eng','stat-best'].forEach(function(id){var el=g(id);if(el)el.value='';});
+  g('stat-mois').value=new Date().toISOString().slice(0,7);
+  document.querySelectorAll('#stat-plat-pills .spill-btn').forEach(function(b){b.classList.remove('on');});
+  g('stat-plat-pills').querySelector('[data-val="Instagram"]').classList.add('on');
+  g('stat-plat').value='Instagram';
+  g('madd-stat').classList.add('open');
+}
+function closeAddStat(){g('madd-stat').classList.remove('open');}
+g('madd-stat').addEventListener('click',function(e){if(e.target===g('madd-stat'))closeAddStat();});
+function saveStat(){
+  if(!CL)return;
+  var plat=g('stat-plat').value,mois=g('stat-mois').value;
+  if(!plat||!mois){alert('Plateforme et mois requis');return;}
+  // Colonnes existantes dans stats_clients
+  var data={
+    client_id:CL.id,plateforme:plat,mois:mois,
+    abonnes:parseInt(g('stat-ab').value)||0,
+    nouveaux_abonnes:parseInt(g('stat-new').value)||0,
+    vues:parseInt(g('stat-vues').value)||0,
+    engagement:parseFloat(g('stat-eng').value)||0,
+    meilleur_post:g('stat-best').value.trim()
+  };
+  // Vérifier si existe déjà
+  sbF('stats_clients','client_id=eq.'+CL.id+'&plateforme=eq.'+plat+'&mois=eq.'+mois+'&select=id').then(function(r){
+    var req;
+    if(r&&r.length&&r[0].id){
+      req=fetch(SB+'/rest/v1/stats_clients?id=eq.'+r[0].id,{method:'PATCH',headers:HPa,body:JSON.stringify(data)});
+    }else{
+      req=fetch(SB+'/rest/v1/stats_clients',{method:'POST',headers:HJ,body:JSON.stringify(data)});
+    }
+    req.then(function(){
+      return sbF('stats_clients','client_id=eq.'+CL.id+'&select=*&order=mois.desc');
+    }).then(function(s){STATS=s||[];closeAddStat();renderStats();toast(plat+' mis à jour ✓');});
+  });
+}
+
+document.addEventListener('keydown',function(e){if(e.key==='Escape'){closePanel();closeLivPanel();closeBatch();closeAddStat();}});
 </script>
 </body>
 </html>
