@@ -1307,7 +1307,8 @@ function renderClPage() {
       var paye = (f.acompte_paye?f.acompte||0:0)+(f.solde_paye?f.solde||0:0);
       var payePct = f.budget_total ? Math.round(paye/f.budget_total*100) : 0;
       var statusTxt = f.solde_paye ? '<span class="badge bsg">Sold&eacute;</span>' : f.acompte_paye ? '<span class="badge br1">Acompte ok</span>' : '<span class="badge bcc">En cours</span>';
-      return '<div class="pr" style="grid-template-columns:2fr 1fr 1fr 1fr 100px 36px" data-clid="'+cl.id+'" onclick="openPanelClient(this.dataset.clid)">'+
+      var clid=cl.id;
+      return '<div class="pr" style="grid-template-columns:2fr 1fr 1fr 1fr 100px 36px;cursor:pointer" onclick="openPanelClient(&quot;'+clid+'&quot;)">'+
         '<div><div class="pnm">'+esc(cl.nom)+'</div><div class="psb">'+(cl.secteur||'')+(cl.email?' &middot; '+cl.email:'')+'</div></div>'+
         '<div class="pcl">'+(cl.secteur||'&mdash;')+'</div>'+
         '<div class="pcl">'+done+' / '+livs.length+' livr&eacute;s '+
@@ -1315,7 +1316,7 @@ function renderClPage() {
         '<div class="pcl">'+(f.budget_total?f.budget_total.toLocaleString('fr-FR')+'&euro;':'&mdash;')+
           '<div style="font-size:10px;color:var(--tx3);margin-top:2px">'+payePct+'% pay&eacute;</div></div>'+
         '<div>'+statusTxt+'</div>'+
-        '<div><button class="ibtn" data-clid="'+cl.id+'" onclick="event.stopPropagation();openPanelClient(this.dataset.clid)" style="background:var(--gray1);border:1px solid var(--gray2);width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:16px;color:var(--tx3);display:flex;align-items:center;justify-content:center;">&#8250;</button></div>'+
+        '<div><button class="ibtn" onclick="event.stopPropagation();openPanelClient(&quot;'+clid+'&quot;)" style="background:var(--gray1);border:1px solid var(--gray2);width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:16px;color:var(--tx3);display:flex;align-items:center;justify-content:center;">&#8250;</button></div>'+
       '</div>';
     }).join('');
   });
@@ -1382,7 +1383,7 @@ function openPanelClient(id) {
         '<div style="font-size:11px;color:var(--tx3);">'+(l.format||'')+(l.plateforme?' · '+l.plateforme:'')+'</div>'+
         (l.notes_client?'<div style="font-size:11px;color:var(--org);margin-top:3px;font-weight:600">Commentaire : '+esc(l.notes_client)+'</div>':'')+
         '</div>'+
-        '<select data-lid="'+l.id+'" onchange="updateLivStatut(this.dataset.lid,this.value)" style="font-size:11px;font-weight:700;border:none;background:transparent;cursor:pointer;">'+
+        '<select onchange="updateLivStatut(&quot;'+l.id+'&quot;,this.value)"   style="font-size:11px;font-weight:700;border:none;background:transparent;cursor:pointer;">'+
           Object.keys(SL).map(function(k){return '<option value="'+k+'"'+(l.statut===k?' selected':'')+'>'+SL[k]+'</option>';}).join('')+
         '</select>'+
       '</div>';
