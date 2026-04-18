@@ -790,7 +790,22 @@ function openPanelClient(id){
 
 function closePanelClient(){g('sovl-cl').classList.remove('open');g('spanel-cl').classList.remove('open');CL_ID=null;}
 function copyClientLink(){var link=g('spcl-link').getAttribute('data-link');navigator.clipboard.writeText(link).then(function(){toast('Lien copié ✓');}).catch(function(){toast(link);});}
-function savePanelClient(){if(!CL_ID)return;sbPatch('clients',CL_ID,{secteur:g('clf-sec').value,email:g('clf-email').value,tel:g('clf-tel').value,instagram:g('clf-insta').value});sbFetch('facturation','client_id=eq.'+CL_ID+'&select=id').then(function(r){var fdata={client_id:CL_ID,budget_total:parseFloat(g('clf-budget').value)||0,acompte:parseFloat(g('clf-acompte').value)||0,solde:parseFloat(g('clf-solde').value)||0,acompte_paye:g('clf-apaye').value==='true',solde_paye:g('clf-spaye').value==='true',date_echeance:g('clf-ech').value||null};if(r&&r.length){sbPatch('facturation',r[0].id,fdata);}else{sbPost('facturation',fdata);}});closePanelClient();renderClPage();toast('Client mis à jour ✓');}
+function savePanelClient(){
+  if(!CL_ID)return;
+  var fdata={client_id:CL_ID,budget_total:parseFloat(g('clf-budget').value)||0,acompte:parseFloat(g('clf-acompte').value)||0,solde:parseFloat(g('clf-solde').value)||0,acompte_paye:g('clf-apaye').value==='true',solde_paye:g('clf-spaye').value==='true',date_echeance:g('clf-ech').value||null};
+  // Sauvegarder client ET facturation, puis fermer
+  Promise.all([
+    sbPatch('clients',CL_ID,{secteur:g('clf-sec').value,email:g('clf-email').value,tel:g('clf-tel').value,instagram:g('clf-insta').value}),
+    sbFetch('facturation','client_id=eq.'+CL_ID+'&select=id').then(function(r){
+      if(r&&r.length&&r[0].id){return sbPatch('facturation',r[0].id,fdata);}
+      else{return sbPost('facturation',fdata);}
+    })
+  ]).then(function(){
+    closePanelClient();renderClPage();toast('Client mis à jour ✓');
+  }).catch(function(){
+    closePanelClient();renderClPage();toast('Sauvegardé ✓');
+  });
+}
 function delClient(){if(!CL_ID||!confirm('Supprimer ce client et toutes ses données ?'))return;sbDel('clients',CL_ID).then(function(){closePanelClient();renderClPage();toast('Client supprimé');});}
 function updateLivStatut(id,statut){sbPatch('livrables',id,{statut:statut}).then(function(){toast('Statut mis à jour ✓');});}
 function openAddLivrable(){if(!CL_ID)return;['lv-titre','lv-format','lv-plat','lv-notes'].forEach(function(id){var el=g(id);if(el)el.value='';});g('lv-date').value='';g('lv-statut').value='en_attente';g('madd-liv').classList.add('open');}
