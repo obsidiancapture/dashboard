@@ -861,7 +861,7 @@ function renderKPIs(){
     var all=results[0]||[];PROS=all;
     var facts=results[1]||[];
     var seen={};var dedup=facts.filter(function(f){if(seen[f.client_id])return false;seen[f.client_id]=true;return true;});
-    var recu=dedup.reduce(function(s,f){if(f.solde_paye)return s+(f.budget_total||0);return s+(f.acompte_paye?f.acompte||0:0);},0);
+    var recu=dedup.reduce(function(s,f){return s+(f.budget_total||0);},0);
     g('kpis').innerHTML=build(all,recu);
   }).catch(function(){g('kpis').innerHTML=build(null);});
 }
