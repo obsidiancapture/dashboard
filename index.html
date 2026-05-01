@@ -849,8 +849,6 @@ function renderKPIs(){
     var nr=ac.filter(function(p){return!p.relance;}).length;
     return '<div class="kpic glass hero dark"><div class="klbl">Total prospects</div><div class="kval">'+all.length+'</div><div class="ksub">'+ac.length+' actifs</div></div>'+
       '<div class="kpic glass"><div class="klbl">Conversion</div><div class="kval">'+tx+'%</div><div class="ksub '+(tx>=25?'cg':'cm')+'">'+sg.length+' signé'+(sg.length>1?'s':'')+'</div></div>'+
-      '<div class="kpic glass"><div class="klbl">CA contracté</div><div class="kval">'+ca.toLocaleString('fr-FR')+'€</div><div class="ksub cm">devis signés</div></div>'+
-      '<div class="kpic glass"><div class="klbl">CA reçu</div><div class="kval cg">'+(recu===null?'—':recu.toLocaleString('fr-FR')+'€')+'</div><div class="ksub cg">encaissé</div></div>'+
       '<div class="kpic glass"><div class="klbl">Pipeline</div><div class="kval ca">'+pp.toLocaleString('fr-FR')+'€</div><div class="ksub ca">en cours</div></div>'+
       '<div class="kpic glass"><div class="klbl">Relances</div><div class="kval '+(rt>0||nr>0?'cr':'')+'">'+rt+'</div><div class="ksub '+(rt>0?'cr':nr>0?'ca':'cm')+'">'+(rt>0?'en retard':nr>0?nr+' sans relance':'à jour')+'</div></div>';
   }
