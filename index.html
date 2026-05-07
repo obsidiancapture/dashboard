@@ -1076,31 +1076,53 @@ var JOURS_FR=['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
 
 function importXlsx(input){
   var file=input.files[0];if(!file)return;
-  if(typeof XLSX==='undefined'){toast('Chargement SheetJS…');return;}
+  if(typeof XLSX==='undefined'){toast('SheetJS pas encore chargé, réessaie.');return;}
   var reader=new FileReader();
   reader.onload=function(e){
     try{
-      var wb=XLSX.read(new Uint8Array(e.target.result),{type:'array',cellDates:true});
+      var wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
       var ws=wb.Sheets[wb.SheetNames[0]];
-      var rows=XLSX.utils.sheet_to_json(ws,{defval:''});
+      var ref=ws['!ref']||'A1:Z100';
+      var rng=XLSX.utils.decode_range(ref);
+      /* Trouver la ligne d'en-tête : première ligne contenant "Date" dans une cellule */
+      var hdrRow=0;
+      outer:for(var r=rng.s.r;r<=Math.min(rng.e.r,20);r++){
+        for(var c=rng.s.c;c<=rng.e.c;c++){
+          var cell=ws[XLSX.utils.encode_cell({r:r,c:c})];
+          if(cell&&cell.v&&String(cell.v).toLowerCase().trim()==='date'){hdrRow=r;break outer;}
+        }
+      }
+      var rows=XLSX.utils.sheet_to_json(ws,{defval:'',range:hdrRow});
       var evs=[];
+      var CY=new Date().getFullYear();
       rows.forEach(function(row){
         var keys=Object.keys(row);
-        function col(){for(var i=0;i<arguments.length;i++){for(var j=0;j<keys.length;j++){if(keys[j].toLowerCase()===arguments[i].toLowerCase())return String(row[keys[j]]||'');}}return'';}
-        var dateRaw=col('date','Date','Date de publication','Date publication','Jour','jour');
-        var titre=col('titre','Titre','sujet','Sujet','contenu','Contenu','hook','Hook','post','Post');
-        var plat=col('plateforme','Plateforme','platform','Platform','réseau','reseau');
+        function col(){
+          for(var i=0;i<arguments.length;i++){
+            var needle=arguments[i].toLowerCase().trim();
+            for(var j=0;j<keys.length;j++){if(keys[j].toLowerCase().trim()===needle)return String(row[keys[j]]||'');}
+          }return'';
+        }
+        var dateRaw=col('date','Date');
+        var titre=col('sujet','Sujet','titre','Titre','hook','Hook','contenu','Contenu','post','Post');
         var fmt=col('format','Format','type','Type');
-        var notes=col('notes','Notes','légende','legende','Légende','caption','Caption');
+        var funnel=col('funnel','Funnel','type contenu');
+        var plat=col('plateforme','Plateforme','platform','Platform','réseau','reseau');
+        var notes=col('angle pme','Angle PME','angle','notes','Notes','légende','legende','cible','Cible');
+        var statut=col('statut','Statut','status','Status');
         if(!dateRaw||!titre)return;
+        /* Parser la date */
         var d=null;
-        if(dateRaw instanceof Date){d=dateRaw;}
-        else if(typeof dateRaw==='number'){d=new Date(Date.UTC(1899,11,30)+dateRaw*86400000);}
-        else{
+        if(typeof dateRaw==='number'&&dateRaw>1000){
+          d=new Date(Date.UTC(1899,11,30)+dateRaw*86400000);
+        }else{
           var s=String(dateRaw).trim();
-          var parts=s.split(/[\/\-\.]/);
-          if(parts.length===3){
-            var p0=parseInt(parts[0]),p1=parseInt(parts[1]),p2=parseInt(parts[2]);
+          var pts=s.split(/[\/\-\.]/);
+          if(pts.length===2){
+            /* DD/MM sans année → année courante */
+            d=new Date(CY,parseInt(pts[1],10)-1,parseInt(pts[0],10));
+          }else if(pts.length===3){
+            var p0=parseInt(pts[0],10),p1=parseInt(pts[1],10),p2=parseInt(pts[2],10);
             if(p2>31){d=new Date(p2,p1-1,p0);}
             else if(p0>31){d=new Date(p0,p1-1,p2);}
             else{d=new Date(p2<100?2000+p2:p2,p1-1,p0);}
@@ -1108,14 +1130,23 @@ function importXlsx(input){
         }
         if(!d||isNaN(d.getTime()))return;
         var ds=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-        evs.push({date:ds,titre:String(titre),plat:String(plat),fmt:String(fmt),notes:String(notes)});
+        /* Déduire plateforme depuis format si absent */
+        var pl=plat||'';
+        if(!pl){
+          var fl=fmt.toLowerCase();
+          if(fl.indexOf('tiktok')>=0||fl.indexOf('short')>=0)pl='TikTok';
+          else if(fl.indexOf('youtube')>=0)pl='YouTube';
+          else if(fl.indexOf('linkedin')>=0)pl='LinkedIn';
+          else pl='Instagram';
+        }
+        evs.push({date:ds,titre:String(titre),plat:pl,fmt:String(fmt),funnel:String(funnel),statut:String(statut),notes:String(notes)});
       });
       CAL_DATA=evs;
       localStorage.setItem('obd_cal',JSON.stringify(evs));
       if(evs.length){var fd=new Date(evs[0].date+'T00:00:00');CAL_MO=fd.getMonth();CAL_YR=fd.getFullYear();}
       renderCal();
       toast(evs.length+' événements importés ✓');
-    }catch(err){toast('Erreur .xlsx : '+err.message);}
+    }catch(err){toast('Erreur .xlsx : '+err.message);console.error(err);}
     input.value='';
   };
   reader.readAsArrayBuffer(file);
@@ -1139,29 +1170,34 @@ function renderCal(){
   var byDay={};
   CAL_DATA.forEach(function(ev){
     if(ev.date&&ev.date.startsWith(mo)){
-      var d=parseInt(ev.date.split('-')[2]);
+      var d=parseInt(ev.date.split('-')[2],10);
       if(!byDay[d])byDay[d]=[];
       byDay[d].push(ev);
     }
   });
+  /* Couleurs : platform si connue, sinon funnel */
   var PCOL={Instagram:'rgba(193,48,108,.85)',TikTok:'rgba(10,10,10,.75)',YouTube:'rgba(197,48,48,.85)',LinkedIn:'rgba(30,58,138,.8)'};
   var PBGC={Instagram:'rgba(193,48,108,.13)',TikTok:'rgba(10,10,10,.08)',YouTube:'rgba(197,48,48,.13)',LinkedIn:'rgba(30,58,138,.12)'};
+  var FCOL={TOFU:'rgba(30,58,138,.8)',MOFU:'rgba(154,52,18,.85)',BOFU:'rgba(20,83,45,.85)'};
+  var FBGC={TOFU:'rgba(30,58,138,.12)',MOFU:'rgba(154,52,18,.12)',BOFU:'rgba(20,83,45,.12)'};
   for(var d=1;d<=daysInMo;d++){
     var ds=mo+'-'+String(d).padStart(2,'0');
     var isToday=ds===todayStr;
     var evs=byDay[d]||[];
     html+='<div class="cal-day'+(isToday?' today':'')+'"><div class="cal-dnum">'+d+'</div>';
     evs.forEach(function(ev){
-      var pc=PCOL[ev.plat]||'rgba(12,75,95,.8)';
-      var bg=PBGC[ev.plat]||'rgba(12,75,95,.1)';
-      var lbl=ev.titre.length>16?ev.titre.slice(0,15)+'…':ev.titre;
-      html+='<div class="cal-ev" style="color:'+pc+';background:'+bg+'" title="'+esc(ev.titre)+(ev.notes&&ev.notes!=='undefined'?' — '+ev.notes:'')+'">';
+      var knownPlat=PCOL[ev.plat];
+      var pc=knownPlat?PCOL[ev.plat]:(FCOL[ev.funnel]||'rgba(12,75,95,.8)');
+      var bg=knownPlat?PBGC[ev.plat]:(FBGC[ev.funnel]||'rgba(12,75,95,.1)');
+      var lbl=ev.titre.length>18?ev.titre.slice(0,17)+'…':ev.titre;
+      var tip=esc(ev.titre)+(ev.fmt?' ['+ev.fmt+']':'')+(ev.notes&&ev.notes!=='undefined'&&ev.notes!==''?' — '+ev.notes:'');
+      html+='<div class="cal-ev" style="color:'+pc+';background:'+bg+'" title="'+tip+'">';
       html+=esc(lbl)+'</div>';
     });
     html+='</div>';
   }
   if(!CAL_DATA.length){
-    html+='<div style="grid-column:1/-1;text-align:center;padding:40px 0;color:var(--tx3)"><div style="font-size:32px;opacity:.2;margin-bottom:10px">📅</div><div style="font-family:var(--serif);font-size:18px;font-style:italic;opacity:.5">Importe ton .xlsx pour voir le calendrier</div></div>';
+    html+='<div style="grid-column:1/-1;text-align:center;padding:40px 0;color:var(--tx3)"><div style="font-size:32px;opacity:.18;margin-bottom:10px">📅</div><div style="font-family:var(--serif);font-size:18px;font-style:italic;opacity:.5">Importe ton .xlsx pour voir le calendrier</div></div>';
   }
   grid.innerHTML=html;
 }
